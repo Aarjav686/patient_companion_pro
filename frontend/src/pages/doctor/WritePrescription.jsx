@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { prescriptionsAPI, appointmentsAPI } from '../../services/api';
 import { Plus, X, Pill, Trash2, Calendar, User, Download } from 'lucide-react';
-import { formatDate } from '../../lib/utils';
+import { formatDate, escapeHtml } from '../../lib/utils';
 
 export default function WritePrescription() {
   const { user } = useAuth();
@@ -80,10 +80,10 @@ export default function WritePrescription() {
     const win = window.open('', '_blank', 'width=800,height=900');
     const medicines = (rx.medicines || []).map((m, i) => `
       <tr style="border-bottom:1px solid #eee">
-        <td style="padding:8px 4px;font-weight:600">${i + 1}. ${m.name}</td>
-        <td style="padding:8px 4px;color:#555">${m.dosage || '—'}</td>
-        <td style="padding:8px 4px;color:#555">${m.duration || '—'}</td>
-        <td style="padding:8px 4px;color:#555;font-size:12px">${m.instructions || '—'}</td>
+        <td style="padding:8px 4px;font-weight:600">${i + 1}. ${escapeHtml(m.name)}</td>
+        <td style="padding:8px 4px;color:#555">${escapeHtml(m.dosage) || '—'}</td>
+        <td style="padding:8px 4px;color:#555">${escapeHtml(m.duration) || '—'}</td>
+        <td style="padding:8px 4px;color:#555;font-size:12px">${escapeHtml(m.instructions) || '—'}</td>
       </tr>`).join('');
     win.document.write(`<!DOCTYPE html><html><head>
       <title>Prescription — ${rx.diagnosis}</title>
@@ -111,32 +111,32 @@ export default function WritePrescription() {
         <div>
           <div class="clinic-name">Patient Companion Pro</div>
           <div class="clinic-sub">AI-Powered Healthcare Management</div>
-          <div class="clinic-sub" style="margin-top:10px;font-weight:600;font-size:14px;color:#333">${user?.name}</div>
-          <div class="clinic-sub">${user?.qualification || ''} · ${user?.specialization || ''}</div>
-          <div class="clinic-sub">${user?.hospital || ''}</div>
+          <div class="clinic-sub" style="margin-top:10px;font-weight:600;font-size:14px;color:#333">${escapeHtml(user?.name)}</div>
+          <div class="clinic-sub">${escapeHtml(user?.qualification) || ''} · ${escapeHtml(user?.specialization) || ''}</div>
+          <div class="clinic-sub">${escapeHtml(user?.hospital) || ''}</div>
         </div>
         <div class="rx-symbol">℞</div>
       </div>
       <div class="section">
         <div class="section-title">Patient Details</div>
         <div class="patient-grid">
-          <div class="patient-field"><label>Patient Name</label><span>${rx.patientName || '—'}</span></div>
+          <div class="patient-field"><label>Patient Name</label><span>${escapeHtml(rx.patientName) || '—'}</span></div>
           <div class="patient-field"><label>Date Issued</label><span>${formatDate(rx.createdAt)}</span></div>
           <div class="patient-field"><label>Status</label><span style="color:#6c3de0;text-transform:capitalize">${rx.status}</span></div>
         </div>
       </div>
       <div class="section">
         <div class="section-title">Diagnosis</div>
-        <div class="diagnosis-box">${rx.diagnosis}</div>
+        <div class="diagnosis-box">${escapeHtml(rx.diagnosis)}</div>
       </div>
       <div class="section">
         <div class="section-title">Prescribed Medicines</div>
         <table><thead><tr><th>Medicine</th><th>Dosage</th><th>Duration</th><th>Instructions</th></tr></thead>
         <tbody>${medicines}</tbody></table>
       </div>
-      ${rx.advice ? `<div class="section"><div class="section-title">Doctor's Advice</div><div class="advice-box">${rx.advice}</div></div>` : ''}
+      ${rx.advice ? `<div class="section"><div class="section-title">Doctor's Advice</div><div class="advice-box">${escapeHtml(rx.advice)}</div></div>` : ''}
       <div class="footer">
-        <div><div class="signature-line">${user?.name}<br/>Signature &amp; Seal</div></div>
+        <div><div class="signature-line">${escapeHtml(user?.name)}<br/>Signature &amp; Seal</div></div>
         <div style="text-align:right">
           <div style="font-size:12px;color:#666">Reg. No: PCPRO-2026</div>
           <div class="disclaimer">Computer-generated prescription — Patient Companion Pro</div>

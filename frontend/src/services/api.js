@@ -89,7 +89,13 @@ export const appointmentsAPI = {
 export const doctorsAPI = {
   getAll: () => handleResponse(
     supabase.from('profiles').select('*').eq('role', 'doctor')
-  ),
+  ).then(res => ({
+    data: res.data.map(doc => ({
+      ...doc,
+      consultationFee: doc.consultation_fee,
+      bloodGroup: doc.blood_group,
+    }))
+  })),
   
   getPatients: async (doctorId) => {
     // Unique list of patients this doctor has seen
@@ -100,13 +106,17 @@ export const doctorsAPI = {
       
     if (error) throw { error: error.message };
     
-    // De-duplicate
+    // De-duplicate and map camelCase fields
     const uniquePatients = [];
     const ids = new Set();
     data.forEach(apt => {
       if (apt.patient && !ids.has(apt.patient_id)) {
         ids.add(apt.patient_id);
-        uniquePatients.push(apt.patient);
+        uniquePatients.push({
+          ...apt.patient,
+          bloodGroup: apt.patient.blood_group,
+          chronicConditions: apt.patient.chronic_conditions,
+        });
       }
     });
 

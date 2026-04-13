@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/layout/Layout';
 
 // Auth pages
@@ -38,25 +39,27 @@ export default function App() {
 
             {/* Protected Routes — wrapped in Layout */}
             <Route element={<Layout />}>
-              {/* Patient Routes */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/appointments" element={<Appointments />} />
-              <Route path="/prescriptions" element={<Prescriptions />} />
-              <Route path="/lab-tests" element={<LabTests />} />
-              <Route path="/records" element={<Records />} />
-              <Route path="/blood-donation" element={<BloodDonation />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/ai-assessment" element={<AIAssessment />} />
+              {/* Patient Routes — only patients can access */}
+              <Route path="/dashboard" element={<ProtectedRoute role="patient"><Dashboard /></ProtectedRoute>} />
+              <Route path="/appointments" element={<ProtectedRoute role="patient"><Appointments /></ProtectedRoute>} />
+              <Route path="/prescriptions" element={<ProtectedRoute role="patient"><Prescriptions /></ProtectedRoute>} />
+              <Route path="/lab-tests" element={<ProtectedRoute role="patient"><LabTests /></ProtectedRoute>} />
+              <Route path="/records" element={<ProtectedRoute role="patient"><Records /></ProtectedRoute>} />
+              <Route path="/blood-donation" element={<ProtectedRoute role="patient"><BloodDonation /></ProtectedRoute>} />
+              <Route path="/alerts" element={<ProtectedRoute role="patient"><Alerts /></ProtectedRoute>} />
+              <Route path="/ai-assessment" element={<ProtectedRoute role="patient"><AIAssessment /></ProtectedRoute>} />
+
+              {/* Shared routes — both roles */}
               <Route path="/profile" element={<Profile />} />
 
-              {/* Doctor Routes */}
-              <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-              <Route path="/doctor/patients" element={<PatientList />} />
-              <Route path="/doctor/appointments" element={<ManageAppointments />} />
-              <Route path="/doctor/prescriptions" element={<WritePrescription />} />
-              <Route path="/doctor/lab-tests" element={<LabTests />} />
-              <Route path="/doctor/schedule" element={<Schedule />} />
-              <Route path="/doctor/blood-bank" element={<BloodBank />} />
+              {/* Doctor Routes — only doctors can access */}
+              <Route path="/doctor/dashboard" element={<ProtectedRoute role="doctor"><DoctorDashboard /></ProtectedRoute>} />
+              <Route path="/doctor/patients" element={<ProtectedRoute role="doctor"><PatientList /></ProtectedRoute>} />
+              <Route path="/doctor/appointments" element={<ProtectedRoute role="doctor"><ManageAppointments /></ProtectedRoute>} />
+              <Route path="/doctor/prescriptions" element={<ProtectedRoute role="doctor"><WritePrescription /></ProtectedRoute>} />
+              <Route path="/doctor/lab-tests" element={<ProtectedRoute role="doctor"><LabTests /></ProtectedRoute>} />
+              <Route path="/doctor/schedule" element={<ProtectedRoute role="doctor"><Schedule /></ProtectedRoute>} />
+              <Route path="/doctor/blood-bank" element={<ProtectedRoute role="doctor"><BloodBank /></ProtectedRoute>} />
             </Route>
 
             {/* Default redirect */}
@@ -68,4 +71,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-

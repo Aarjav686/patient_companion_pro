@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -9,6 +9,20 @@ export default function TopBar({ collapsed, onToggle, theme, onThemeToggle }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDropdown]);
 
   const handleLogout = () => {
     logout();
@@ -21,10 +35,6 @@ export default function TopBar({ collapsed, onToggle, theme, onThemeToggle }) {
         <button className="topbar-toggle" onClick={onToggle} title="Toggle sidebar">
           {collapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
         </button>
-        <div className="topbar-search">
-          <Search />
-          <input type="text" placeholder="Search patients, doctors, records..." />
-        </div>
       </div>
 
       <div className="topbar-right">
@@ -37,7 +47,7 @@ export default function TopBar({ collapsed, onToggle, theme, onThemeToggle }) {
           <span className="badge"></span>
         </button>
 
-        <div style={{ position: 'relative' }}>
+        <div ref={dropdownRef} style={{ position: 'relative' }}>
           <button
             className="topbar-icon-btn"
             onClick={() => setShowDropdown(!showDropdown)}
@@ -94,3 +104,4 @@ export default function TopBar({ collapsed, onToggle, theme, onThemeToggle }) {
     </header>
   );
 }
+

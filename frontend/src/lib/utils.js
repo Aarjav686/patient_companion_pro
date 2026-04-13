@@ -34,6 +34,20 @@ export const formatDateTime = (d) => {
 };
 
 /**
+ * Escape HTML entities to prevent XSS in template strings
+ * Used in prescription print templates where user data is injected into document.write()
+ */
+export const escapeHtml = (str) => {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+};
+
+/**
  * Generate time slots between start and end times at a given interval (minutes)
  * start/end: "HH:MM" (24h)
  */
@@ -59,3 +73,4 @@ export const generateTimeSlots = (startTime, endTime, durationMins = 30) => {
  */
 export const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 export const DAY_SHORT  = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
