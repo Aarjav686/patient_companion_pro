@@ -57,9 +57,13 @@ if data_path:
         df_prec = pd.read_csv(os.path.join(data_path, 'precautions.csv'))
         df_work = pd.read_csv(os.path.join(data_path, 'workout.csv'))
         
-        df_diets['Disease'] = df_diets['Disease'].str.strip().str.lower()
-        df_meds['Disease'] = df_meds['Disease'].str.strip().str.lower()
-        df_work['disease'] = df_work['disease'].str.strip().str.lower()
+        # Normalize column names — some CSVs use 'Disease', others 'disease'
+        for df in [df_diets, df_meds, df_prec, df_work]:
+            df.columns = [c.strip() for c in df.columns]
+            if 'Disease' in df.columns:
+                df.rename(columns={'Disease': 'disease'}, inplace=True)
+            if 'disease' in df.columns:
+                df['disease'] = df['disease'].str.strip().str.lower()
         print(f"Loaded recommendation CSVs from: {data_path}")
     except Exception as e:
         print("Warning: Missing CSVs.", e)
@@ -262,7 +266,7 @@ def calculate_fusion_risk(profile: Profile, top_disease: str):
 def fetch_recommendations(disease: str):
     d = disease.lower().strip()
     
-    def search_df(df, target_col, src_col='Disease'):
+    def search_df(df, target_col, src_col='disease'):
         # Fallback partial matching
         exact = df[df[src_col] == d]
         if not exact.empty:
@@ -286,18 +290,19 @@ def fetch_recommendations(disease: str):
         diet = search_df(df_diets, 'Diet')
         meds = search_df(df_meds, 'Medication')
         
-        # Workout uses 'disease', 'workout'
-        workout_res = df_work[df_work['disease'].str.contains(d, na=False)]
-        workout = workout_res.iloc[0]['workout'] if not workout_res.empty else None
+        # Workout CSV has columns: disease, workouts (after rename)
+        workout_res = df_work[df_work['disease'].str.contains(d, na=False)] if df_work is not None else pd.DataFrame()
+        workout = workout_res.iloc[0]['Workouts'] if not workout_res.empty else None
         
         # Precautions
-        px_match = df_prec[df_prec['Disease'].str.strip().str.lower().str.contains(d, na=False)]
+        px_match = df_prec[df_prec['disease'].str.contains(d, na=False)]
         px_list = []
         if not px_match.empty:
-            for p in ['Symptom_precaution_0', 'Symptom_precaution_1', 'Symptom_precaution_2', 'Symptom_precaution_3']:
-                val = px_match.iloc[0][p]
-                if pd.notna(val):
-                    px_list.append(str(val).title())
+            for p in ['Precaution_1', 'Precaution_2', 'Precaution_3', 'Precaution_4']:
+                if p in px_match.columns:
+                    val = px_match.iloc[0][p]
+                    if pd.notna(val):
+                        px_list.append(str(val).strip().title())
                     
         return {
             "diets": safe_parse(diet, ["Hydration, easily digestible nutrient-rich foods."]),
