@@ -6,8 +6,22 @@ from sklearn.metrics import accuracy_score
 import pickle
 import os
 
+# Skip training if model already exists
+if os.path.exists('model.pkl') and os.path.exists('symptoms_list.pkl'):
+    print("Model already exists. Skipping training.")
+    exit(0)
+
 print("--- Step 1: Loading Datasets ---")
-base_path = '../datasets/sympScan/'
+# Try multiple paths for Docker vs local dev
+for candidate in ['../datasets/sympScan/', 'datasets/sympScan/', './datasets/sympScan/']:
+    csv_path = candidate + 'Diseases_and_Symptoms_dataset.csv'
+    if os.path.exists(csv_path):
+        base_path = candidate
+        break
+else:
+    print("ERROR: Could not find datasets directory. Checked ../datasets, ./datasets")
+    exit(1)
+
 df_symp = pd.read_csv(base_path + 'Diseases_and_Symptoms_dataset.csv')
 
 print(f"Original Dataset shape: {df_symp.shape}")
