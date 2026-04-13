@@ -39,18 +39,32 @@ except Exception as e:
     symptoms_list = []
 
 # --- Load CSV Data ---
-data_path = os.path.join(base_path, '..', 'datasets', 'sympScan')
-try:
-    df_diets = pd.read_csv(os.path.join(data_path, 'diets.csv'))
-    df_meds = pd.read_csv(os.path.join(data_path, 'medications.csv'))
-    df_prec = pd.read_csv(os.path.join(data_path, 'precautions.csv'))
-    df_work = pd.read_csv(os.path.join(data_path, 'workout.csv'))
-    
-    df_diets['Disease'] = df_diets['Disease'].str.strip().str.lower()
-    df_meds['Disease'] = df_meds['Disease'].str.strip().str.lower()
-    df_work['disease'] = df_work['disease'].str.strip().str.lower()
-except Exception as e:
-    print("Warning: Missing CSVs.", e)
+# Try multiple paths: Docker (/app/datasets/) vs local dev (../datasets/)
+data_path = None
+for candidate in [
+    os.path.join(base_path, '..', 'datasets', 'sympScan'),
+    os.path.join(base_path, 'datasets', 'sympScan'),
+]:
+    if os.path.isdir(candidate):
+        data_path = candidate
+        break
+
+df_diets = df_meds = df_prec = df_work = None
+if data_path:
+    try:
+        df_diets = pd.read_csv(os.path.join(data_path, 'diets.csv'))
+        df_meds = pd.read_csv(os.path.join(data_path, 'medications.csv'))
+        df_prec = pd.read_csv(os.path.join(data_path, 'precautions.csv'))
+        df_work = pd.read_csv(os.path.join(data_path, 'workout.csv'))
+        
+        df_diets['Disease'] = df_diets['Disease'].str.strip().str.lower()
+        df_meds['Disease'] = df_meds['Disease'].str.strip().str.lower()
+        df_work['disease'] = df_work['disease'].str.strip().str.lower()
+        print(f"Loaded recommendation CSVs from: {data_path}")
+    except Exception as e:
+        print("Warning: Missing CSVs.", e)
+else:
+    print("Warning: datasets/sympScan directory not found. Recommendations will use defaults.")
 
 class Profile(BaseModel):
     age: int
