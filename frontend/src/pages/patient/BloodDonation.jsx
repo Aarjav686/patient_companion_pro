@@ -108,12 +108,11 @@ export default function BloodDonation() {
     setSaving(true);
     try {
       const payload = { ...requestForm, units_required: Number(requestForm.units_required) };
-      await bloodBankAPI.createRequest(payload);
+      const { data: createdRequest } = await bloodBankAPI.createRequest(payload);
       
       if (payload.urgency === 'Emergency') {
         const { data: allActiveDonors } = await bloodBankAPI.getAllActiveDonors();
         if (allActiveDonors) {
-          // In a real system, you would filter efficiently via SQL. Here we filter locally for the prototype
           const { getCompatibleDonorGroups } = await import('../../utils/bloodUtils');
           const compatible = getCompatibleDonorGroups(payload.blood_group_needed);
           
@@ -126,7 +125,9 @@ export default function BloodDonation() {
           // Don't alert the requester if they happen to be an eligible donor
           alertList = alertList.filter(d => d.user_id !== user.id);
 
-          await bloodBankAPI.createEmergencyAlerts(alertList, payload.hospital, payload.blood_group_needed);
+          await bloodBankAPI.createEmergencyAlerts(
+            alertList, payload.hospital, payload.blood_group_needed, createdRequest?.id
+          );
         }
       }
       

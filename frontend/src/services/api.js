@@ -677,17 +677,55 @@ export const bloodBankAPI = {
     return { data };
   },
   
-  createEmergencyAlerts: async (donorsToAlert, hospital, bloodGroupNeeded) => {
+  createEmergencyAlerts: async (donorsToAlert, hospital, bloodGroupNeeded, requestId) => {
     if (!donorsToAlert || donorsToAlert.length === 0) return { data: null };
     
     const inserts = donorsToAlert.map(donor => ({
       user_id: donor.user_id,
-      title: 'Emergency Blood Request',
-      message: `Emergency ${bloodGroupNeeded} blood needed at ${hospital}. You are a compatible donor.`,
-      severity: 'warning'
+      title: '🚨 Emergency Blood Request',
+      message: `Emergency ${bloodGroupNeeded} blood needed at ${hospital}. You are a compatible donor. Tap Accept to volunteer.`,
+      severity: 'critical',
+      metadata: JSON.stringify({ type: 'blood_emergency', request_id: requestId, hospital, blood_group: bloodGroupNeeded })
     }));
     
     return handleResponse(supabase.from('alerts').insert(inserts));
+  },
+
+  acceptBloodRequest: async (requestId, hospital) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    // 1. Get donor profile for this user
+    const { data: donorProfile, error: donorErr } = await supabase
+      .from('blood_donors').select('id').eq('user_id', user.id).single();
+    if (donorErr || !donorProfile) throw { error: 'You must be a registered donor to accept.' };
+    
+    // 2. Check if the request is still pending
+    const { data: request, error: reqErr } = await supabase
+      .from('blood_requests').select('*').eq('id', requestId).single();
+    if (reqErr) throw { error: 'Blood request not found.' };
+    if (request.status !== 'pending') throw { error: 'This request has already been fulfilled.' };
+    
+    // 3. Match the donor to the request
+    const { error: updateErr } = await supabase.from('blood_requests').update({
+      status: 'matched',
+      matched_donor_id: donorProfile.id
+    }).eq('id', requestId);
+    if (updateErr) throw { error: updateErr.message };
+    
+    // 4. Notify the patient who raised the request
+    await supabase.from('alerts').insert([{
+      user_id: request.patient_id,
+      title: '✅ Donor Found!',
+      message: `A compatible donor has accepted your emergency blood request at ${hospital}. The donor will contact the hospital.`,
+      severity: 'info'
+    }]);
+    
+    // 5. Update donor's last donation date
+    await supabase.from('blood_donors').update({
+      last_donation_date: new Date().toISOString().split('T')[0]
+    }).eq('id', donorProfile.id);
+    
+    return { data: { matched: true } };
   }
 };
 
