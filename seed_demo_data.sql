@@ -53,6 +53,25 @@ CREATE POLICY "Doctors can manage availability" ON doctor_availability FOR ALL U
 -- Add metadata column to alerts if missing
 ALTER TABLE alerts ADD COLUMN IF NOT EXISTS metadata text;
 
+-- Health Assessments table (AI engine results)
+CREATE TABLE IF NOT EXISTS health_assessments (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  patient_id uuid REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  symptoms jsonb NOT NULL DEFAULT '[]'::jsonb,
+  predictions jsonb NOT NULL DEFAULT '[]'::jsonb,
+  risk_score int NOT NULL,
+  risk_level text NOT NULL,
+  risk_factors jsonb NOT NULL DEFAULT '[]'::jsonb,
+  recommendations jsonb NOT NULL DEFAULT '{}'::jsonb,
+  alerts jsonb NOT NULL DEFAULT '[]'::jsonb,
+  created_at timestamptz DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+ALTER TABLE health_assessments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view their own assessments" ON health_assessments;
+CREATE POLICY "Users can view their own assessments" ON health_assessments FOR SELECT USING (auth.uid() = patient_id);
+DROP POLICY IF EXISTS "Users can insert their own assessments" ON health_assessments;
+CREATE POLICY "Users can insert their own assessments" ON health_assessments FOR INSERT WITH CHECK (auth.uid() = patient_id);
+
 -- Step 1: Get user IDs from profiles by email
 -- (We use a DO block so the script is self-contained)
 
