@@ -78,10 +78,12 @@ export default function Alerts() {
   };
 
   const formatDate = (d) => {
+    if (!d) return '';
     const date = new Date(d);
+    if (isNaN(date.getTime())) return '';
     const now = new Date();
     const diff = now - date;
-    if (diff < 3600000) return `${Math.floor(diff / 60000)} min ago`;
+    if (diff < 3600000) return `${Math.max(1, Math.floor(diff / 60000))} min ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} hours ago`;
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   };
